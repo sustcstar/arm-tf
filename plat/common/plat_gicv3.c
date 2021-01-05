@@ -57,6 +57,9 @@ uint32_t plat_ic_get_pending_interrupt_id(void)
 
 	assert(IS_IN_EL3());
 	irqnr = gicv3_get_pending_interrupt_id();
+
+	NOTICE("Interrupt Happens. ID = %llu\n", irqnr);
+
 	return gicv3_is_intr_id_special_identifier(irqnr) ?
 				INTR_ID_UNAVAILABLE : irqnr;
 }

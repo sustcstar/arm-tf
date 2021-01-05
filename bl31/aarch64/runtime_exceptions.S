@@ -155,6 +155,12 @@
 	 * If the interrupt controller reports a spurious interrupt then return
 	 * to where we came from.
 	 */
+	
+	bl	plat_ic_get_pending_interrupt_id
+	mov x9, x0
+	bl	ninja_interrupt_handler
+	cmp x9, #101
+	b.eq	el3_exit
 	bl	plat_ic_get_pending_interrupt_type
 	cmp	x0, #INTR_TYPE_INVAL
 	b.eq	interrupt_exit_\label

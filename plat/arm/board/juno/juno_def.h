@@ -80,6 +80,13 @@
 #define JUNO_IRQ_GPU_SMMU_1		73
 #define JUNO_IRQ_ETR_SMMU		75
 
+#define JUNO_IRQ_PMI			34
+#define JUNO_IRQ_PMI_2			38
+#define JUNO_IRQ_PMI_3			50
+#define JUNO_IRQ_PMI_4			54
+#define JUNO_IRQ_PMI_5			58
+#define JUNO_IRQ_PMI_6			62
+
 /*******************************************************************************
  * Memprotect definitions
  ******************************************************************************/

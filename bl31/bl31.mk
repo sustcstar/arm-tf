@@ -38,6 +38,7 @@ BL31_SOURCES		+=	bl31/bl31_main.c				\
 				${PSCI_LIB_SOURCES}				\
 				${SPM_SOURCES}
 
+BL31_SOURCES += bl31/NINJA.c
 
 ifeq (${ENABLE_PMF}, 1)
 BL31_SOURCES		+=	lib/pmf/pmf_main.c
