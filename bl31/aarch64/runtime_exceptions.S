@@ -157,10 +157,12 @@
 	 */
 	
 	bl	plat_ic_get_pending_interrupt_id
-	mov x9, x0
+	mov x1, x20
+	// ldr x4, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X20]
+	// mov x1, x20
 	bl	ninja_interrupt_handler
-	cmp x9, #101
-	b.eq	el3_exit
+	cmp x0, #101
+	b.eq	interrupt_exit_\label
 	bl	plat_ic_get_pending_interrupt_type
 	cmp	x0, #INTR_TYPE_INVAL
 	b.eq	interrupt_exit_\label

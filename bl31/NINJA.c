@@ -7,9 +7,9 @@
 #define JUNO_IRQ_PMI_6 62
 
 spinlock_t console_lock;
-#define MY_ERROR(args)        \
-    spin_lock(&console_lock); \
-    ERROR(args);              \
+#define MY_ERROR(fmt, ...)     \
+    spin_lock(&console_lock);  \
+    ERROR(fmt, ##__VA_ARGS__); \
     spin_unlock(&console_lock)
 
 void check_current_EL()
@@ -21,27 +21,79 @@ void check_current_EL()
     ERROR("CurrentEL=%llu\n", el);
 }
 
-uint32_t ninja_interrupt_handler()
+uint32_t ninja_interrupt_handler(unsigned long long iid, unsigned long long sp)
 {
-    uint32_t id;
-    READ_REG(id, x9);
-
-    spin_lock(&console_lock);
-    ERROR("[Ninja]: Detected Interrupt, id=%u\n", id);
-    spin_unlock(&console_lock);
-    if (id == 34 ||
-        id == 38 ||
-        id == 50 ||
-        id == 54 ||
-        id == 58 ||
-        id == 62)
+    if (iid == 34 ||
+        iid == 38 ||
+        iid == 50 ||
+        iid == 54 ||
+        iid == 58 ||
+        iid == 62)
     {
-        MY_ERROR("[Ninja]: Detected PMI\n");
-        uint32_t inf = 0xffffffff;
+
+        spin_lock(&console_lock);
+        ERROR("[Ninja888]: Detected Interrupt, id=%llu\n", iid);
+        spin_unlock(&console_lock);
+
+        // disable PMI
+        asm volatile("msr PMINTENCLR_EL1, %0"
+                     :
+                     : "r"(0xffffffff));
+
+        // disable PMU counter
+        asm volatile("msr PMCNTENCLR_EL0, %0"
+                     :
+                     : "r"(0xffffffff));
+
+        uint64_t pid;
+        plat_ic_disable_interrupt(iid);
+        plat_ic_clear_interrupt_pending(iid);
+
+        // READ_REG(pid, x4);
+        MY_ERROR("[Ninja]: Detected PMI, SP=0x%llx\n", sp);
+        MY_ERROR("[Ninja]: x21=0x%llx\n", *(unsigned long long*)(sp + 0xa8));
+        
+        asm volatile("ldr %1, [%0,0xb0] "
+                     : "=r"(pid)
+                     : "r"(sp));
+
+        MY_ERROR("[Ninja]: PID=0x%llx\n", pid);
+
+        int midr;
+        READ_SYSREG(midr, MIDR_EL1);
+        MY_ERROR("[Ninja]: MIDR_EL1=0x%x\n", midr);
+        // 0x410fd033
+
+        int event;
+        READ_SYSREG(event, PMEVTYPER0_EL0);
+        MY_ERROR("[Ninja]: Event_TYPE=0x%x\n", event);
+
+        READ_SYSREG(event, pmevcntr0_el0);
+        MY_ERROR("[Ninja]: counter=0x%x\n", event);
+
+        READ_SYSREG(event, PMOVSCLR_EL0);
+        MY_ERROR("[Ninja]: overflow=0x%x\n", event);
+
+        asm volatile("msr PMOVSCLR_EL0, %0"
+                     :
+                     : "r"(0xffffffff));
+
+        // uint32_t inf = 0xffffffff - 4000;
+        uint32_t inf = 1;
         WRITE_SYSREG(inf, pmevcntr0_el0);
-        MY_ERROR("[Ninja]: Reset pmevcntr0_el0 to 0xFFFFFFFF\n");
-        uint32_t zero = 101;
-        WRITE_REG(zero, x9);
+        MY_ERROR("[Ninja]: Reset pmevcntr0_el0 to 0x%x\n", inf);
+
+        // enable PMI
+        plat_ic_enable_interrupt(iid);
+        asm volatile("msr PMINTENSET_EL1, %0"
+                     :
+                     : "r"(1));
+
+        // enable PMU counter
+        asm volatile("msr PMCNTENSET_EL0, %0"
+                     :
+                     : "r"(1));
+        return 101;
     }
     return 0;
 }

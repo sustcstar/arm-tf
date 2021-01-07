@@ -340,6 +340,15 @@ func save_gp_pmcr_pauth_regs
 	stp	x24, x25, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X24]
 	stp	x26, x27, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X26]
 	stp	x28, x29, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X28]
+	
+	/*
+	mov x3, #0x7000000
+	mov x4, #0xc550
+	add x3, x3, x4
+	mov x4, sp
+	str x4, [x3]
+ 	*/
+
 	mrs	x18, sp_el0
 	str	x18, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_SP_EL0]
 
